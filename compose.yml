@@ -1,19 +1,34 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
     container_name: delivery-service_delivery-service_db
+    env_file: .env
     environment:
-      POSTGRES_USER: delivery-service_user
-      POSTGRES_PASSWORD: delivery-service_password
-      POSTGRES_DB: delivery-service_delivery-service
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U delivery-service_user -d delivery-service_delivery-service"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgres_test:
+    image: postgres:16-alpine
+    container_name: delivery-service_delivery-service_db_test
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${TEST_DB_NAME}
+    ports:
+      - "${TEST_DB_PORT}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${TEST_DB_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 5
