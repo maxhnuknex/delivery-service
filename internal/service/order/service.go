@@ -52,7 +52,7 @@ func NewService(
 	}
 }
 
-func (s *Service) GetById(
+func (s *Service) GetByID(
 	ctx context.Context,
 	id int64,
 ) (*domain.Order, error) {
