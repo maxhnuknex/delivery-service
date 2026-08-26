@@ -40,3 +40,15 @@ type Order struct {
 	CreatedAt       time.Time   `json:"created_at"`
 	UpdatedAt       time.Time   `json:"updated_at"`
 }
+
+type CreateOrderDTO struct {
+	UserID          int64
+	RestaurantID    int64
+	DeliveryAddress string
+	Items           []CreateOrderItemDTO
+}
+
+type CreateOrderItemDTO struct {
+	MenuItemID int64
+	Quantity   int
+}

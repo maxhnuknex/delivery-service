@@ -4,10 +4,13 @@ import (
 	"log"
 
 	"delivery-service/internal/repository/postgres"
+	menuRepo "delivery-service/internal/repository/postgres/menu"
+	orderRepo "delivery-service/internal/repository/postgres/order"
+	restaurantRepo "delivery-service/internal/repository/postgres/restaurant"
+	userRepo "delivery-service/internal/repository/postgres/user"
 )
 
 func main() {
-	// DSN для локального запуска (без Docker для приложения, БД крутится в Docker на порту 5432)
 	dbURL := "postgres://delivery-service_user:delivery-service_password@localhost:5432/delivery-service_delivery-service?sslmode=disable"
 
 	log.Println("Connecting to PostgreSQL...")
@@ -19,4 +22,10 @@ func main() {
 	defer storage.Close()
 
 	log.Println("Successfully connected to PostgreSQL! The database is ready.")
+
+	userRepo := userRepo.NewRepository(storage.Pool)
+	menuRepo := menuRepo.NewRepository(storage.Pool)
+	orderRepo := orderRepo.NewRepository(storage.Pool)
+	restaurantRepo := restaurantRepo.NewRepository(storage.Pool)
+
 }
