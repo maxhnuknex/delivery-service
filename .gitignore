@@ -1,0 +1,21 @@
+# Binaries for SDKs and apps
+*.exe
+*.exe-
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+main
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment files
+.env
+
+# Go build cache
+vendor/
