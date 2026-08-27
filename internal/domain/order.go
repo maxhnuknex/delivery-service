@@ -52,3 +52,7 @@ type CreateOrderItemDTO struct {
 	MenuItemID int64
 	Quantity   int
 }
+
+type UpdateOrderStatusDTO struct {
+	Status OrderStatus `json:"status"`
+}

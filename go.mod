@@ -2,7 +2,10 @@ module delivery-service
 
 go 1.26.4
 
-require github.com/jackc/pgx/v5 v5.10.0
+require (
+	github.com/go-chi/chi/v5 v5.3.2
+	github.com/jackc/pgx/v5 v5.10.0
+)
 
 require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
