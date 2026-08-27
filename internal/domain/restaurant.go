@@ -7,6 +7,7 @@ import (
 
 var (
 	ErrRestaurantNotFound = errors.New("restaurant not found")
+	ErrRestaurantInactive = errors.New("restaurant is currently inactive")
 )
 
 type Restaurant struct {
