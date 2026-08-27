@@ -20,7 +20,6 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }
 
-// Create атомарно сохраняет заказ и все его позиции
 func (r *Repository) Create(ctx context.Context, order *domain.Order) error {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
