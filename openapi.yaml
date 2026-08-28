@@ -1,0 +1,182 @@
+openapi: 3.0.3
+info:
+  title: Delivery Service API
+  description: MVP сервиса доставки еды для платформы Delivery Service.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Локальный сервер
+paths:
+  /restaurants:
+    get:
+      summary: Получить список заведений
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [RESTAURANT, SHOP]
+      responses:
+        '200':
+          description: Успешный ответ
+        '500':
+          description: Ошибка сервера
+    post:
+      summary: Зарегистрировать заведение
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRestaurantRequest'
+      responses:
+        '201':
+          description: Заведение создано
+        '400':
+          description: Ошибка валидации JSON
+        '500':
+          description: Ошибка сервера
+  /restaurants/{id}/menu:
+    get:
+      summary: Получить меню заведения
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Успешный ответ (возвращает пустой массив [], если меню пустое)
+        '400':
+          description: Некорректный ID
+        '404':
+          description: Заведение не найдено
+        '500':
+          description: Ошибка сервера
+    post:
+      summary: Добавить товар в меню
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMenuItemRequest'
+      responses:
+        '201':
+          description: Товар добавлен (по умолчанию is_available = true)
+        '400':
+          description: Ошибка валидации JSON
+        '500':
+          description: Ошибка сервера
+  /orders:
+    post:
+      summary: Создать заказ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Заказ успешно создан
+        '400':
+          description: Недостаточно товара на складе (для типа SHOP) или неверный JSON
+        '404':
+          description: Заведение или товар не найдены
+        '500':
+          description: Ошибка сервера
+  /orders/{id}:
+    get:
+      summary: Получить заказ по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Успешный ответ
+        '400':
+          description: Некорректный ID
+        '404':
+          description: Заказ не найден
+        '500':
+          description: Ошибка сервера
+  /orders/{id}/status:
+    patch:
+      summary: Изменить статус заказа (вебхук)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+      responses:
+        '204':
+          description: Статус успешно обновлен
+        '400':
+          description: Ошибка валидации
+        '404':
+          description: Заказ не найден
+
+components:
+  schemas:
+    CreateRestaurantRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [RESTAURANT, SHOP]
+        address:
+          type: string
+        webhook_url:
+          type: string
+    CreateMenuItemRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: integer
+        stock_quantity:
+          type: integer
+    CreateOrderRequest:
+      type: object
+      properties:
+        user_id:
+          type: integer
+        restaurant_id:
+          type: integer
+        delivery_address:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              menu_item_id:
+                type: integer
+              quantity:
+                type: integer
