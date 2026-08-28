@@ -91,7 +91,9 @@ func (w *NotifierWorker) processOrder(ctx context.Context, order *domain.Order) 
 
 		resp, err := w.httpClient.Do(req)
 		if err == nil {
-			resp.Body.Close()
+			if err := resp.Body.Close(); err != nil {
+				log.Printf("[Worker] no close body")
+			}
 			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 				log.Printf("[Worker] Successfully notified restaurant %d about order %d", rest.ID, order.ID)
 				_ = w.statusUpdater.UpdateStatus(ctx, order.ID, domain.OrderStatusAccepted)
@@ -104,6 +106,10 @@ func (w *NotifierWorker) processOrder(ctx context.Context, order *domain.Order) 
 
 		log.Printf("[Worker] Attempt %d failed to send order %d to %s: %v", attempt, order.ID, rest.WebhookURL, sendErr)
 		time.Sleep(1 * time.Second)
+	}
+
+	if sendErr != nil {
+		log.Printf("[Worker] failed to notify after retries: %v", sendErr)
 	}
 
 	log.Printf("[Worker] Giving up on order %d notification after 3 attempts", order.ID)

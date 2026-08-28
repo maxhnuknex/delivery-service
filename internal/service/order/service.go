@@ -8,7 +8,6 @@ import (
 	"delivery-service/internal/domain"
 )
 
-// Интерфейсы зависимостей сервиса
 type UserRepository interface {
 	GetByID(ctx context.Context, id int64) (*domain.User, error)
 }
@@ -22,7 +21,7 @@ type MenuRepository interface {
 }
 
 type OrderRepository interface {
-	Create(ctx context.Context, order *domain.Order) error
+	Create(ctx context.Context, order *domain.Order, deductStock bool) error
 	GetByID(ctx context.Context, id int64) (*domain.Order, error)
 	UpdateStatus(ctx context.Context, id int64, status domain.OrderStatus) error
 	ListByUserID(ctx context.Context, userID int64) ([]*domain.Order, error)
@@ -33,7 +32,7 @@ type Service struct {
 	restaurantRepo RestaurantRepository
 	menuRepo       MenuRepository
 	orderRepo      OrderRepository
-	orderEvents    chan<- *domain.Order // Канал для отправки в фоновый воркер
+	orderEvents    chan<- *domain.Order
 }
 
 func NewService(
@@ -50,36 +49,6 @@ func NewService(
 		orderRepo:      orderRepo,
 		orderEvents:    orderEvents,
 	}
-}
-
-func (s *Service) GetByID(
-	ctx context.Context,
-	id int64,
-) (*domain.Order, error) {
-	order, err := s.orderRepo.GetByID(ctx, id)
-	if err != nil {
-		return nil, fmt.Errorf("order service - get order: %v", err)
-	}
-	return order, nil
-}
-
-func (s *Service) ListUserOrders(
-	ctx context.Context,
-	userId int64,
-) ([]*domain.Order, error) {
-	orders, err := s.orderRepo.ListByUserID(ctx, userId)
-	if err != nil {
-		return nil, fmt.Errorf("order service - ListUserIrder: %v", err)
-	}
-
-	return orders, nil
-}
-
-func (s *Service) UpdateStatus(ctx context.Context, id int64, status domain.OrderStatus) error {
-	if err := s.orderRepo.UpdateStatus(ctx, id, status); err != nil {
-		return fmt.Errorf("order service - update status: %w", err)
-	}
-	return nil
 }
 
 func (s *Service) CreateOrder(ctx context.Context, dto domain.CreateOrderDTO) (*domain.Order, error) {
@@ -118,6 +87,7 @@ func (s *Service) CreateOrder(ctx context.Context, dto domain.CreateOrderDTO) (*
 		menuMap[item.ID] = item
 	}
 
+	isShop := restaurant.Type == domain.EstablishmentTypeShop
 	var totalPrice int64
 	orderItems := make([]domain.OrderItem, 0, len(dto.Items))
 
@@ -133,9 +103,12 @@ func (s *Service) CreateOrder(ctx context.Context, dto domain.CreateOrderDTO) (*
 			return nil, fmt.Errorf("item '%s' is currently unavailable", dbItem.Name)
 		}
 
-		itemTotalPrice := dbItem.Price * int64(reqItem.Quantity)
-		totalPrice += itemTotalPrice
+		// Проверка остатка на складе магазина
+		if isShop && dbItem.StockQuantity < reqItem.Quantity {
+			return nil, fmt.Errorf("not enough stock for '%s': available %d, requested %d", dbItem.Name, dbItem.StockQuantity, reqItem.Quantity)
+		}
 
+		totalPrice += dbItem.Price * int64(reqItem.Quantity)
 		orderItems = append(orderItems, domain.OrderItem{
 			MenuItemID: dbItem.ID,
 			Quantity:   reqItem.Quantity,
@@ -157,7 +130,8 @@ func (s *Service) CreateOrder(ctx context.Context, dto domain.CreateOrderDTO) (*
 		Items:           orderItems,
 	}
 
-	if err := s.orderRepo.Create(ctx, order); err != nil {
+	// Вызываем атомарное создание со списанием остатков
+	if err := s.orderRepo.Create(ctx, order, isShop); err != nil {
 		return nil, fmt.Errorf("order service - save order: %w", err)
 	}
 
@@ -169,4 +143,16 @@ func (s *Service) CreateOrder(ctx context.Context, dto domain.CreateOrderDTO) (*
 	}
 
 	return order, nil
+}
+
+func (s *Service) GetByID(ctx context.Context, id int64) (*domain.Order, error) {
+	return s.orderRepo.GetByID(ctx, id)
+}
+
+func (s *Service) ListUserOrders(ctx context.Context, userID int64) ([]*domain.Order, error) {
+	return s.orderRepo.ListByUserID(ctx, userID)
+}
+
+func (s *Service) UpdateStatus(ctx context.Context, id int64, status domain.OrderStatus) error {
+	return s.orderRepo.UpdateStatus(ctx, id, status)
 }

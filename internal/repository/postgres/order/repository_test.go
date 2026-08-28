@@ -77,7 +77,7 @@ func TestRepository(t *testing.T) {
 			},
 		}
 
-		err := repo.Create(ctx, newOrder)
+		err := repo.Create(ctx, newOrder, false)
 		if err != nil {
 			t.Fatalf("expected no error on order creation, got: %v", err)
 		}
@@ -111,7 +111,7 @@ func TestRepository(t *testing.T) {
 				{MenuItemID: f.MenuItemID, Quantity: 1, Price: 500},
 			},
 		}
-		_ = repo.Create(ctx, newOrder)
+		_ = repo.Create(ctx, newOrder, false)
 
 		err := repo.UpdateStatus(ctx, newOrder.ID, domain.OrderStatusAccepted)
 		if err != nil {

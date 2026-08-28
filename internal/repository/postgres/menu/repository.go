@@ -19,13 +19,13 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 
 func (r *Repository) Create(ctx context.Context, item *domain.MenuItem) error {
 	query := `
-		INSERT INTO menu_items (restaurant_id, name, description, price, is_available)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO menu_items (restaurant_id, name, description, price, stock_quantity, is_available)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING id, created_at
 	`
 	err := r.pool.QueryRow(
 		ctx, query,
-		item.RestaurantID, item.Name, item.Description, item.Price, item.IsAvailable,
+		item.RestaurantID, item.Name, item.Description, item.Price, item.StockQuantity, item.IsAvailable,
 	).Scan(&item.ID, &item.CreatedAt)
 	if err != nil {
 		return fmt.Errorf("menu repository - create: %w", err)
@@ -35,7 +35,7 @@ func (r *Repository) Create(ctx context.Context, item *domain.MenuItem) error {
 
 func (r *Repository) GetMenu(ctx context.Context, restaurantID int64) ([]*domain.MenuItem, error) {
 	query := `
-		SELECT id, restaurant_id, name, description, price, is_available, created_at
+		SELECT id, restaurant_id, name, description, price, stock_quantity, is_available, created_at
 		FROM menu_items
 		WHERE restaurant_id = $1 AND is_available = true
 		ORDER BY id ASC
@@ -51,7 +51,7 @@ func (r *Repository) GetMenu(ctx context.Context, restaurantID int64) ([]*domain
 		item := &domain.MenuItem{}
 		err := rows.Scan(
 			&item.ID, &item.RestaurantID, &item.Name, &item.Description,
-			&item.Price, &item.IsAvailable, &item.CreatedAt,
+			&item.Price, &item.StockQuantity, &item.IsAvailable, &item.CreatedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("menu repository - scan menu item: %w", err)
@@ -63,7 +63,7 @@ func (r *Repository) GetMenu(ctx context.Context, restaurantID int64) ([]*domain
 
 func (r *Repository) GetMenuItemsByIDs(ctx context.Context, ids []int64) ([]*domain.MenuItem, error) {
 	query := `
-		SELECT id, restaurant_id, name, description, price, is_available, created_at
+		SELECT id, restaurant_id, name, description, price, stock_quantity, is_available, created_at
 		FROM menu_items
 		WHERE id = ANY($1)
 	`
@@ -78,7 +78,7 @@ func (r *Repository) GetMenuItemsByIDs(ctx context.Context, ids []int64) ([]*dom
 		item := &domain.MenuItem{}
 		err := rows.Scan(
 			&item.ID, &item.RestaurantID, &item.Name, &item.Description,
-			&item.Price, &item.IsAvailable, &item.CreatedAt,
+			&item.Price, &item.StockQuantity, &item.IsAvailable, &item.CreatedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("menu repository - scan item: %w", err)

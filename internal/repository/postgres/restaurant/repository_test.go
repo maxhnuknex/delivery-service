@@ -85,7 +85,7 @@ func TestRepository(t *testing.T) {
 		_ = repo.Create(ctx, activeRest)
 		_ = repo.Create(ctx, inactiveRest)
 
-		list, err := repo.ListActive(ctx)
+		list, err := repo.ListActive(ctx, domain.EstablishmentTypeRestaurant)
 		if err != nil {
 			t.Fatalf("expected no error, got: %v", err)
 		}

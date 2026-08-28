@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"delivery-service/internal/domain"
@@ -20,27 +21,51 @@ func NewRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }
 
-func (r *Repository) Create(ctx context.Context, order *domain.Order) error {
+func (r *Repository) Create(ctx context.Context, order *domain.Order, deductStock bool) error {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("order repository - begin tx: %w", err)
+		return fmt.Errorf("order repo - begin tx: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			log.Printf("order repo - deduct stock: %v", err)
+		}
+	}()
+	// Если это магазин — атомарно списываем остатки
+	if deductStock {
+		stockQuery := `
+			UPDATE menu_items
+			SET stock_quantity = stock_quantity - $1
+			WHERE id = $2 AND stock_quantity >= $1
+		`
+		for _, item := range order.Items {
+			cmd, err := tx.Exec(ctx, stockQuery, item.Quantity, item.MenuItemID)
+			if err != nil {
+				return fmt.Errorf("order repo - deduct stock: %w", err)
+			}
+			// Если условие stock_quantity >= $1 не выполнилось, ни одна строка не обновилась
+			if cmd.RowsAffected() == 0 {
+				return domain.ErrInsufficientStock
+			}
+		}
+	}
 
+	// Создание заказа
+	now := time.Now().UTC()
 	orderQuery := `
 		INSERT INTO orders (user_id, restaurant_id, status, delivery_address, total_price, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id
 	`
-	now := time.Now().UTC()
 	err = tx.QueryRow(
 		ctx, orderQuery,
 		order.UserID, order.RestaurantID, order.Status, order.DeliveryAddress, order.TotalPrice, now, now,
 	).Scan(&order.ID)
 	if err != nil {
-		return fmt.Errorf("order repository - insert order: %w", err)
+		return fmt.Errorf("order repo - insert order: %w", err)
 	}
 
+	// Создание позиций заказа
 	itemQuery := `
 		INSERT INTO order_items (order_id, menu_item_id, quantity, price)
 		VALUES ($1, $2, $3, $4)
@@ -53,12 +78,12 @@ func (r *Repository) Create(ctx context.Context, order *domain.Order) error {
 			order.Items[i].OrderID, order.Items[i].MenuItemID, order.Items[i].Quantity, order.Items[i].Price,
 		).Scan(&order.Items[i].ID)
 		if err != nil {
-			return fmt.Errorf("order repository - insert order item: %w", err)
+			return fmt.Errorf("order repo - insert item: %w", err)
 		}
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("order repository - commit tx: %w", err)
+		return fmt.Errorf("order repo - commit tx: %w", err)
 	}
 
 	order.CreatedAt = now

@@ -1,37 +1,54 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: delivery-service_delivery-service_db
-    env_file: .env
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: delivery-service_user
+      POSTGRES_PASSWORD: delivery-service_password
+      POSTGRES_DB: delivery-service_delivery-service
     ports:
-      - "${DB_PORT}:5432"
+      - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U delivery-service_user -d delivery-service_delivery-service"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-  postgres_test:
-    image: postgres:16-alpine
-    container_name: delivery-service_delivery-service_db_test
-    env_file: .env
+  migrator:
+    image: golang:alpine
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${TEST_DB_NAME}
+      GOOSE_DRIVER: postgres
+      GOOSE_DBSTRING: "postgres://delivery-service_user:delivery-service_password@postgres:5432/delivery-service_delivery-service?sslmode=disable"
+    volumes:
+      - ./migrations:/migrations
+    command: >
+      sh -c "go install github.com/pressly/goose/v3/cmd/goose@latest && goose -dir /migrations up"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: "postgres://delivery-service_user:delivery-service_password@postgres:5432/delivery-service_delivery-service?sslmode=disable"
     ports:
-      - "${TEST_DB_PORT}:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${TEST_DB_NAME}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      - "8080:8080"
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+
+  mock-restaurant:
+    build:
+      context: .
+      dockerfile: Dockerfile.mock
+    ports:
+      - "8081:8081"
+    depends_on:
+      api:
+        condition: service_started
 
 volumes:
-  postgres_data:
+  pgdata:

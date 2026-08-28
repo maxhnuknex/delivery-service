@@ -18,6 +18,8 @@ func NewRouter(restHandler *RestaurantHandler, orderHandler *OrderHandler) http.
 		r.Route("/restaurants", func(r chi.Router) {
 			r.Get("/", restHandler.ListActive)
 			r.Get("/{id}/menu", restHandler.GetMenu)
+			r.Post("/", restHandler.CreateRestaurant)
+			r.Post("/{id}/menu", restHandler.CreateMenu)
 		})
 
 		// Заказы
