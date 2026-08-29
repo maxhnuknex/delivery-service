@@ -1,16 +1,18 @@
+version: '3.8'
+
 services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: delivery-service_user
-      POSTGRES_PASSWORD: delivery-service_password
-      POSTGRES_DB: delivery-service_delivery-service
+      POSTGRES_USER: ${DB_USER:-delivery-service_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-delivery-service_password}
+      POSTGRES_DB: ${DB_NAME:-delivery-service_delivery-service}
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U delivery-service_user -d delivery-service_delivery-service"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-delivery-service_user} -d ${DB_NAME:-delivery-service_delivery-service}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -19,7 +21,7 @@ services:
     image: golang:alpine
     environment:
       GOOSE_DRIVER: postgres
-      GOOSE_DBSTRING: "postgres://delivery-service_user:delivery-service_password@postgres:5432/delivery-service_delivery-service?sslmode=disable"
+      GOOSE_DBSTRING: "postgres://${DB_USER:-delivery-service_user}:${DB_PASSWORD:-delivery-service_password}@postgres:5432/${DB_NAME:-delivery-service_delivery-service}?sslmode=disable"
     volumes:
       - ./migrations:/migrations
     command: >
@@ -33,9 +35,10 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: "postgres://delivery-service_user:delivery-service_password@postgres:5432/delivery-service_delivery-service?sslmode=disable"
+      DATABASE_URL: "postgres://${DB_USER:-delivery-service_user}:${DB_PASSWORD:-delivery-service_password}@postgres:5432/${DB_NAME:-delivery-service_delivery-service}?sslmode=disable"
+      SERVER_PORT: ${SERVER_PORT:-8080}
     ports:
-      - "8080:8080"
+      - "${SERVER_PORT:-8080}:8080"
     depends_on:
       migrator:
         condition: service_completed_successfully
@@ -45,7 +48,7 @@ services:
       context: .
       dockerfile: Dockerfile.mock
     ports:
-      - "8081:8081"
+      - "${MOCK_PORT:-8081}:8081"
     depends_on:
       api:
         condition: service_started

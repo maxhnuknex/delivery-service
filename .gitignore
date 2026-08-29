@@ -14,8 +14,14 @@ main
 *.swp
 *.swo
 
-# Environment files
+# Environment files (скрываем секреты, оставляем только example)
 .env
+.env.local
+.env.*.local
 
-# Go build cache
+# Go build cache & dependencies
 vendor/
+
+# OS generated files
+.DS_Store
+Thumbs.db
