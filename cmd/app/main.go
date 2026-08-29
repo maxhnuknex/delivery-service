@@ -16,6 +16,7 @@ import (
 	userRepo "delivery-service/internal/repository/postgres/user"
 	orderSvc "delivery-service/internal/service/order"
 	restSvc "delivery-service/internal/service/restaurant"
+	userSvc "delivery-service/internal/service/user"
 	transportHTTP "delivery-service/internal/transport/http"
 	"delivery-service/internal/worker"
 
@@ -46,13 +47,15 @@ func main() {
 
 	restaurantService := restSvc.NewService(rRepo, mRepo)
 	orderService := orderSvc.NewService(uRepo, rRepo, mRepo, oRepo, orderEvents)
+	UserService := userSvc.New(uRepo)
 
 	notifier := worker.NewNotifierWorker(orderEvents, rRepo, oRepo)
 	go notifier.Start(ctx)
 
 	restHandler := transportHTTP.NewRestaurantHandler(restaurantService)
 	orderHandler := transportHTTP.NewOrderHandler(orderService)
-	router := transportHTTP.NewRouter(restHandler, orderHandler)
+	userHandler := transportHTTP.New(UserService)
+	router := transportHTTP.NewRouter(restHandler, orderHandler, userHandler)
 
 	srv := &http.Server{
 		Addr:         ":8080",

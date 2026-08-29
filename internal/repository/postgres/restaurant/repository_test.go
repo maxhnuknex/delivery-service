@@ -3,6 +3,7 @@ package restaurant
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -14,7 +15,10 @@ import (
 func setupTestDB(t *testing.T) (*pgxpool.Pool, func()) {
 	t.Helper()
 
-	dbURL := "postgres://delivery-service_user:delivery-service_password@localhost:5433/delivery-service_delivery-service_test?sslmode=disable"
+	dbURL := os.Getenv("TEST_DATABASE_URL")
+	if dbURL == "" {
+		dbURL = "postgres://test_user:test_password@localhost:5433/delivery-service_delivery-service_test?sslmode=disable"
+	}
 	ctx := context.Background()
 
 	pool, err := pgxpool.New(ctx, dbURL)

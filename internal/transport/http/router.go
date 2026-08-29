@@ -7,7 +7,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func NewRouter(restHandler *RestaurantHandler, orderHandler *OrderHandler) http.Handler {
+func NewRouter(restHandler *RestaurantHandler, orderHandler *OrderHandler, userHandler *UserHandler) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
@@ -33,6 +33,8 @@ func NewRouter(restHandler *RestaurantHandler, orderHandler *OrderHandler) http.
 		r.Route("/users", func(r chi.Router) {
 			r.Get("/{id}/orders", orderHandler.ListUserOrders)
 		})
+
+		r.Post("/users", userHandler.CreateUser)
 	})
 
 	return r

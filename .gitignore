@@ -25,3 +25,5 @@ vendor/
 # OS generated files
 .DS_Store
 Thumbs.db
+
+.env.e2e

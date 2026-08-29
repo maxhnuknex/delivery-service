@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  db_e2e:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${E2E_DB_USER}
+      POSTGRES_PASSWORD: ${E2E_DB_PASSWORD}
+      POSTGRES_DB: ${E2E_DB_NAME}
+    ports:
+      - "${E2E_DB_PORT}:5432"
+    volumes:
+      - pgdata_e2e:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${E2E_DB_USER} -d ${E2E_DB_NAME}"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+    networks:
+      - e2e_network
+
+  migrator_e2e:
+    image: golang:alpine
+    environment:
+      GOOSE_DRIVER: postgres
+      GOOSE_DBSTRING: "postgres://${E2E_DB_USER}:${E2E_DB_PASSWORD}@db_e2e:5432/${E2E_DB_NAME}?sslmode=disable"
+    volumes:
+      - ./migrations:/migrations
+    command: >
+      sh -c "go install github.com/pressly/goose/v3/cmd/goose@latest && goose -dir /migrations up"
+    depends_on:
+      db_e2e:
+        condition: service_healthy
+    networks:
+      - e2e_network
+
+  api_e2e:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: "postgres://${E2E_DB_USER}:${E2E_DB_PASSWORD}@db_e2e:5432/${E2E_DB_NAME}?sslmode=disable"
+      SERVER_PORT: "8080"
+    ports:
+      - "${E2E_SERVER_PORT}:8080"
+    depends_on:
+      migrator_e2e:
+        condition: service_completed_successfully
+    networks:
+      - e2e_network
+
+  mock_restaurant_e2e:
+    build:
+      context: .
+      dockerfile: Dockerfile.mock
+    ports:
+      - "${E2E_MOCK_PORT}:8081"
+    depends_on:
+      api_e2e:
+        condition: service_started
+    networks:
+      - e2e_network
+
+volumes:
+  pgdata_e2e:
+
+networks:
+  e2e_network:
+    driver: bridge
