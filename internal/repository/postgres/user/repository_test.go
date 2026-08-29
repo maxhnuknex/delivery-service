@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -14,7 +15,12 @@ import (
 func setupTestDB(t *testing.T) (*pgxpool.Pool, func()) {
 	t.Helper()
 
-	dbURL := "postgres://delivery-service_user:delivery-service_password@localhost:5433/delivery-service_delivery-service_test?sslmode=disable"
+	dbURL := os.Getenv("TEST_DATABASE_URL")
+	if dbURL == "" {
+		// Дефолтный URL под значения из .env.e2e
+		dbURL = "postgres://test_user:test_password@localhost:5433/delivery-service_delivery-service_test?sslmode=disable"
+	}
+
 	ctx := context.Background()
 
 	pool, err := pgxpool.New(ctx, dbURL)
@@ -70,7 +76,7 @@ func TestRepository_Create(t *testing.T) {
 		if err == nil {
 			t.Fatalf("expected error due to unique constraint, got nil")
 		}
-		if !strings.Contains(err.Error(), "SQLSTATE 23505") {
+		if !strings.Contains(err.Error(), "23505") {
 			t.Errorf("expected unique constraint violation error, got: %v", err)
 		}
 	})

@@ -3,6 +3,7 @@ package order
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -20,7 +21,10 @@ type testFixtures struct {
 func setupTestDB(t *testing.T) (*pgxpool.Pool, testFixtures, func()) {
 	t.Helper()
 
-	dbURL := "postgres://delivery-service_user:delivery-service_password@localhost:5433/delivery-service_delivery-service_test?sslmode=disable"
+	dbURL := os.Getenv("TEST_DATABASE_URL")
+	if dbURL == "" {
+		dbURL = "postgres://test_user:test_password@localhost:5433/delivery-service_delivery-service_test?sslmode=disable"
+	}
 	ctx := context.Background()
 
 	pool, err := pgxpool.New(ctx, dbURL)
