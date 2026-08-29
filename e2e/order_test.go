@@ -65,7 +65,12 @@ func TestE2E_OrderLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create restaurant: %v", err)
 	}
-	defer respRest.Body.Close()
+
+	defer func() {
+		if err := respRest.Body.Close(); err != nil {
+			t.Fatalf("failed to close body: %v", err)
+		}
+	}()
 
 	if respRest.StatusCode != http.StatusCreated && respRest.StatusCode != http.StatusOK {
 		b, _ := io.ReadAll(respRest.Body)
@@ -86,7 +91,11 @@ func TestE2E_OrderLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to add menu item: %v", err)
 	}
-	defer respMenu.Body.Close()
+	defer func() {
+		if err := respMenu.Body.Close(); err != nil {
+			t.Fatalf("failed to close body: %v", err)
+		}
+	}()
 
 	var item domain.MenuItem
 	_ = json.NewDecoder(respMenu.Body).Decode(&item)
@@ -105,7 +114,11 @@ func TestE2E_OrderLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to execute order request: %v", err)
 	}
-	defer respOrder.Body.Close()
+	defer func() {
+		if err := respOrder.Body.Close(); err != nil {
+			t.Fatalf("failed to close body: %v", err)
+		}
+	}()
 
 	if respOrder.StatusCode != http.StatusCreated && respOrder.StatusCode != http.StatusOK {
 		rawResp, _ := io.ReadAll(respOrder.Body)

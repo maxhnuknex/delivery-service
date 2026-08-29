@@ -28,7 +28,11 @@ func TestE2E_RestaurantFlow(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to execute request: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				t.Fatalf("failed to close body: %v", err)
+			}
+		}()
 
 		if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
 			t.Fatalf("expected status 200/201, got %d", resp.StatusCode)
@@ -58,7 +62,12 @@ func TestE2E_RestaurantFlow(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to execute request: %v", err)
 		}
-		defer resp.Body.Close()
+
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				t.Fatalf("failed to close body: %v", err)
+			}
+		}()
 
 		if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
 			t.Fatalf("expected status 200/201, got %d", resp.StatusCode)
@@ -71,7 +80,11 @@ func TestE2E_RestaurantFlow(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to get menu: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				t.Fatalf("failed to close body: %v", err)
+			}
+		}()
 
 		if resp.StatusCode != http.StatusOK {
 			t.Fatalf("expected status 200, got %d", resp.StatusCode)
