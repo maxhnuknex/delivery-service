@@ -1,11 +1,16 @@
 package http
 
 import (
+	"embed"
+	"io/fs"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
+
+//go:embed web/*
+var webFiles embed.FS
 
 func NewRouter(restHandler *RestaurantHandler, orderHandler *OrderHandler, userHandler *UserHandler) http.Handler {
 	r := chi.NewRouter()
@@ -36,6 +41,12 @@ func NewRouter(restHandler *RestaurantHandler, orderHandler *OrderHandler, userH
 
 		r.Post("/users", userHandler.CreateUser)
 	})
+
+	webRoot, err := fs.Sub(webFiles, "web")
+	if err != nil {
+		panic("embedded web files are unavailable: " + err.Error())
+	}
+	r.Handle("/*", http.FileServer(http.FS(webRoot)))
 
 	return r
 }

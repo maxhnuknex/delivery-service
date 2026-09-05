@@ -21,7 +21,7 @@ func createTestUserFixture(t *testing.T) int64 {
 
 	dbURL := os.Getenv("TEST_DATABASE_URL")
 	if dbURL == "" {
-		dbURL = "postgres://test_user:test_password@localhost:5433/delivery-service_delivery-service_test?sslmode=disable"
+		dbURL = "postgres://test_user:test_password@localhost:5433/delivery_service_test?sslmode=disable"
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -58,7 +58,7 @@ func TestE2E_OrderLifecycle(t *testing.T) {
 		Name:       "Бургерная E2E",
 		Type:       domain.EstablishmentTypeRestaurant,
 		Address:    "ул. Садовая, 10",
-		WebhookURL: "http://delivery-service-mock_restaurant_e2e-1:8081/webhook",
+		WebhookURL: "http://mock_restaurant_e2e:8081/webhook",
 	}
 	restBody, _ := json.Marshal(restDTO)
 	respRest, err := client.Post(apiURL+"/api/v1/restaurants", "application/json", bytes.NewBuffer(restBody))

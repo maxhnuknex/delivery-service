@@ -1,5 +1,7 @@
 version: '3.8'
 
+name: delivery-service-e2e
+
 services:
   db_e2e:
     image: postgres:16-alpine
@@ -55,6 +57,10 @@ services:
       dockerfile: Dockerfile.mock
     ports:
       - "${E2E_MOCK_PORT}:8081"
+    environment:
+      API_BASE_URL: "http://api_e2e:8080/api/v1"
+      MOCK_WEBHOOK_URL: "http://mock_restaurant_e2e:8081/webhook"
+      MOCK_PORT: "8081"
     depends_on:
       api_e2e:
         condition: service_started

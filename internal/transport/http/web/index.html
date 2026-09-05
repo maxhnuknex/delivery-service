@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f7f7f5" />
+    <title>Delivery Service</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="header">
+      <a class="brand" href="/" aria-label="Delivery Service — главная"><span class="service-mark"><i></i><i></i><i></i><i></i></span>Delivery <b>Service</b></a>
+      <div class="header-note"><span class="online-dot"></span>Доставка доступна</div>
+      <div class="header-actions"><button class="orders-button" id="orders-button" type="button">Мои заказы</button><button class="cart-button" id="cart-button" type="button">Корзина <span id="cart-count">0</span></button></div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy"><p class="eyebrow">ДОСТАВКА ЕДЫ</p><h1>Вкусное рядом.<br />Привезём быстро.</h1><p class="hero-text">Рестораны и продукты в одном заказе. Следите за доставкой в реальном времени.</p><a class="hero-button" href="#restaurants">Выбрать заведение</a></div>
+        <div class="hero-route"><span class="route-dot"></span><span></span><span></span><b>Курьер уже в пути</b></div>
+      </section>
+
+      <section class="catalog" id="restaurants">
+        <div class="section-heading">
+          <div><p class="eyebrow">ВИТРИНА</p><h2>Заведения рядом</h2></div>
+          <div class="catalog-controls"><div class="filters" aria-label="Фильтр заведений"><button class="filter-button active" data-filter="">Все</button><button class="filter-button" data-filter="RESTAURANT">Рестораны</button><button class="filter-button" data-filter="SHOP">Магазины</button></div><span id="restaurant-count" class="muted"></span></div>
+        </div>
+        <div id="restaurant-grid" class="restaurant-grid" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <aside class="drawer" id="cart-drawer" aria-hidden="true">
+      <div class="drawer-panel">
+        <div class="drawer-header"><h2>Ваш заказ</h2><button class="icon-button" data-close="cart-drawer" aria-label="Закрыть">×</button></div>
+        <div id="cart-items" class="cart-items"></div>
+        <div id="cart-empty" class="empty-state">В корзине пока пусто.<br />Добавьте что-нибудь из меню.</div>
+        <div class="cart-footer">
+          <div class="total"><span>Итого</span><strong id="cart-total">0 ₽</strong></div>
+          <button id="checkout-button" class="primary-button" type="button" disabled>Оформить заказ</button>
+        </div>
+      </div>
+    </aside>
+
+    <div class="modal" id="menu-modal" aria-hidden="true"><div class="modal-panel menu-panel"><button class="icon-button modal-close" data-close="menu-modal" aria-label="Закрыть">×</button><div id="menu-content"></div></div></div>
+    <div class="modal" id="checkout-modal" aria-hidden="true"><div class="modal-panel checkout-panel"><button class="icon-button modal-close" data-close="checkout-modal" aria-label="Закрыть">×</button><p class="eyebrow">ПОСЛЕДНИЙ ШАГ</p><h2>Куда доставить?</h2><p class="muted">Создадим профиль покупателя и сразу отправим заказ.</p><form id="checkout-form"><label>Имя<input name="name" placeholder="Алексей" required /></label><label>Телефон<input name="phone" type="tel" placeholder="+7 999 123-45-67" required /></label><label>Адрес<input name="address" placeholder="ул. Пушкина, 10" required /></label><button class="primary-button" type="submit">Подтвердить заказ</button></form></div></div>
+    <div class="modal" id="order-modal" aria-hidden="true"><div class="modal-panel order-panel"><button class="icon-button modal-close" data-close="order-modal" aria-label="Закрыть">×</button><div id="order-content"></div></div></div>
+    <div class="modal" id="orders-modal" aria-hidden="true"><div class="modal-panel orders-panel"><button class="icon-button modal-close" data-close="orders-modal" aria-label="Закрыть">×</button><p class="eyebrow">ИСТОРИЯ</p><h2>Мои заказы</h2><div id="orders-content" class="orders-list"></div></div></div>
+
+    <template id="loading-template"><div class="loading"><span></span>Загружаем</div></template>
+    <script src="/app.js"></script>
+  </body>
+</html>

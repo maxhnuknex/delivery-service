@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Delivery Service API
-  description: MVP сервиса доставки еды для платформы Delivery Service.
+  description: API сервиса доставки еды.
   version: 1.0.0
 servers:
   - url: http://localhost:8080/api/v1

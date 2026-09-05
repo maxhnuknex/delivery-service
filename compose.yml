@@ -1,18 +1,20 @@
 version: '3.8'
 
+name: delivery-service
+
 services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: ${DB_USER:-delivery-service_user}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-delivery-service_password}
-      POSTGRES_DB: ${DB_NAME:-delivery-service_delivery-service}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "${DB_PORT}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-delivery-service_user} -d ${DB_NAME:-delivery-service_delivery-service}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -21,7 +23,7 @@ services:
     image: golang:alpine
     environment:
       GOOSE_DRIVER: postgres
-      GOOSE_DBSTRING: "postgres://${DB_USER:-delivery-service_user}:${DB_PASSWORD:-delivery-service_password}@postgres:5432/${DB_NAME:-delivery-service_delivery-service}?sslmode=disable"
+      GOOSE_DBSTRING: "postgres://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sslmode=disable"
     volumes:
       - ./migrations:/migrations
     command: >
@@ -35,20 +37,61 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: "postgres://${DB_USER:-delivery-service_user}:${DB_PASSWORD:-delivery-service_password}@postgres:5432/${DB_NAME:-delivery-service_delivery-service}?sslmode=disable"
-      SERVER_PORT: ${SERVER_PORT:-8080}
+      DATABASE_URL: "postgres://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sslmode=disable"
+      SERVER_PORT: ${SERVER_PORT}
     ports:
-      - "${SERVER_PORT:-8080}:8080"
+      - "${SERVER_PORT}:8080"
     depends_on:
       migrator:
         condition: service_completed_successfully
 
-  mock-restaurant:
+  mock-pizza:
     build:
       context: .
       dockerfile: Dockerfile.mock
-    ports:
-      - "${MOCK_PORT:-8081}:8081"
+    environment:
+      API_BASE_URL: "http://api:8080/api/v1"
+      MOCK_PORT: ${MOCK_PORT}
+      MOCK_NAME: "Forno"
+      MOCK_TYPE: "RESTAURANT"
+      MOCK_ADDRESS: "Покровка, 12"
+      MOCK_WEBHOOK_URL: "http://mock-pizza:8081/webhook"
+      STATUS_DELAY_SECONDS: "15"
+      MOCK_MENU: '[{"name":"Маргарита","description":"Томаты, моцарелла, базилик","price":590,"stock_quantity":0},{"name":"Пепперони","description":"Салями, томатный соус, моцарелла","price":690,"stock_quantity":0},{"name":"Тирамису","description":"Классический итальянский десерт","price":320,"stock_quantity":0}]'
+    depends_on:
+      api:
+        condition: service_started
+
+  mock-burger:
+    build:
+      context: .
+      dockerfile: Dockerfile.mock
+    environment:
+      API_BASE_URL: "http://api:8080/api/v1"
+      MOCK_PORT: ${MOCK_PORT}
+      MOCK_NAME: "NORD"
+      MOCK_TYPE: "RESTAURANT"
+      MOCK_ADDRESS: "Чистопрудный бульвар, 8"
+      MOCK_WEBHOOK_URL: "http://mock-burger:8081/webhook"
+      STATUS_DELAY_SECONDS: "15"
+      MOCK_MENU: '[{"name":"Смэш-бургер","description":"Говядина, чеддер, огурец, соус","price":540,"stock_quantity":0},{"name":"Картофель фри","description":"Хрустящий картофель с морской солью","price":220,"stock_quantity":0},{"name":"Лимонад","description":"Домашний лимонад с цитрусом","price":180,"stock_quantity":0}]'
+    depends_on:
+      api:
+        condition: service_started
+
+  mock-grocery:
+    build:
+      context: .
+      dockerfile: Dockerfile.mock
+    environment:
+      API_BASE_URL: "http://api:8080/api/v1"
+      MOCK_PORT: ${MOCK_PORT}
+      MOCK_NAME: "Близко"
+      MOCK_TYPE: "SHOP"
+      MOCK_ADDRESS: "Большая Никитская, 24"
+      MOCK_WEBHOOK_URL: "http://mock-grocery:8081/webhook"
+      STATUS_DELAY_SECONDS: "15"
+      MOCK_MENU: '[{"name":"Молоко 3.2%","description":"Фермерское молоко, 930 мл","price":129,"stock_quantity":30},{"name":"Хлеб на закваске","description":"Пшеничный хлеб, 400 г","price":149,"stock_quantity":20},{"name":"Яйца C1","description":"Десяток фермерских яиц","price":169,"stock_quantity":15},{"name":"Бананы","description":"Связка бананов, 1 кг","price":139,"stock_quantity":25}]'
     depends_on:
       api:
         condition: service_started

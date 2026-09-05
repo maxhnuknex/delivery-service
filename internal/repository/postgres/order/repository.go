@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"delivery-service/internal/domain"
@@ -27,9 +26,7 @@ func (r *Repository) Create(ctx context.Context, order *domain.Order, deductStoc
 		return fmt.Errorf("order repo - begin tx: %w", err)
 	}
 	defer func() {
-		if err := tx.Rollback(ctx); err != nil {
-			log.Printf("order repo - deduct stock: %v", err)
-		}
+		_ = tx.Rollback(ctx)
 	}()
 	// Если это магазин — атомарно списываем остатки
 	if deductStock {

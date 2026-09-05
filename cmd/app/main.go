@@ -26,7 +26,11 @@ import (
 func main() {
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		dbURL = "postgres://delivery-service_user:delivery-service_password@localhost:5432/delivery-service_delivery-service?sslmode=disable"
+		log.Fatal("DATABASE_URL is not set")
+	}
+	serverPort := os.Getenv("SERVER_PORT")
+	if serverPort == "" {
+		log.Fatal("SERVER_PORT is not set")
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -58,14 +62,14 @@ func main() {
 	router := transportHTTP.NewRouter(restHandler, orderHandler, userHandler)
 
 	srv := &http.Server{
-		Addr:         ":8080",
+		Addr:         ":" + serverPort,
 		Handler:      router,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
 
 	go func() {
-		log.Println("Server running on port :8080")
+		log.Printf("Server running on port :%s", serverPort)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("server error: %v", err)
 		}

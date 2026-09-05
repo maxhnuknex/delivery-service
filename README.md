@@ -1,6 +1,6 @@
 # Delivery Service — MVP Сервиса Доставки Еды
 
-Бэкенд-сервис для платформы «Delivery Service», реализующий интеграцию с партнерскими заведениями (рестораны и магазины) и обработку заказов пользователей.
+Бэкенд-сервис доставки еды, реализующий интеграцию с партнерскими заведениями (рестораны и магазины) и обработку заказов пользователей.
 
 ---
 
@@ -24,8 +24,8 @@ docker compose up --build -d
 C4Container
     title C4 Container Diagram - Delivery Service
 
-    Person(user, "Пользователь (Web)", "Использует веб-интерфейс Delivery Service")
-    System_Boundary(c1, "Delivery Service Platform") {
+    Person(user, "Пользователь (Web)", "Использует веб-интерфейс сервиса")
+    System_Boundary(c1, "Delivery Service") {
         Container(api, "API Service", "Go, Chi, pgx", "Обрабатывает запросы клиентов и ресторанов, управляет заказами")
         ContainerDb(db, "PostgreSQL", "Postgres 16", "Хранит пользователей, заведения, меню, заказы и позиции")
     }

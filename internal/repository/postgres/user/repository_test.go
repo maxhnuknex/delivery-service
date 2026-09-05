@@ -18,7 +18,7 @@ func setupTestDB(t *testing.T) (*pgxpool.Pool, func()) {
 	dbURL := os.Getenv("TEST_DATABASE_URL")
 	if dbURL == "" {
 		// Дефолтный URL под значения из .env.e2e
-		dbURL = "postgres://test_user:test_password@localhost:5433/delivery-service_delivery-service_test?sslmode=disable"
+		dbURL = "postgres://test_user:test_password@localhost:5433/delivery_service_test?sslmode=disable"
 	}
 
 	ctx := context.Background()

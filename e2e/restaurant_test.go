@@ -20,7 +20,7 @@ func TestE2E_RestaurantFlow(t *testing.T) {
 			Name:       "Додо Пицца E2E",
 			Type:       domain.EstablishmentTypeRestaurant,
 			Address:    "Невский пр., 20",
-			WebhookURL: "http://delivery-service-mock_restaurant_e2e-1:8081/webhook",
+			WebhookURL: "http://mock_restaurant_e2e:8081/webhook",
 		}
 
 		bodyBytes, _ := json.Marshal(reqBody)
